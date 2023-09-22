@@ -27,4 +27,4 @@ Contributions are welcome! If you have suggestions or improvements, feel free to
 
 ## Contact
 
-If you have any questions or need assistance, you can reach out to [Your Email](mailto:your.email@example.com).
+If you have any questions or need assistance, you can reach out to [Your Email](mailto:Nambuki@proton.me).
