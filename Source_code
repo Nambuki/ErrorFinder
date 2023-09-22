@@ -1,0 +1,175 @@
+import re
+import psutil
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import scrolledtext
+
+class GameLogAnalyzer:
+    def __init__(self, window):
+        self.window = window
+        self.window.title("Game Log Analyzer")
+
+        self.error_messages = []
+        self.current_index = 0
+
+        self.create_gui()
+
+    def create_gui(self):
+        log_label = tk.Label(self.window, text="Enter the path to the game log file:")
+        log_label.pack()
+
+        self.log_entry = tk.Entry(self.window, width=50)
+        self.log_entry.pack()
+
+        analyze_button = tk.Button(self.window, text="Analyze Log", command=self.analyze_game_log)
+        analyze_button.pack()
+
+        next_error_button = tk.Button(self.window, text="Show Next Error", command=self.show_next_error)
+        next_error_button.pack()
+
+        clear_errors_button = tk.Button(self.window, text="Clear Errors", command=self.clear_errors)
+        clear_errors_button.pack()
+
+        open_file_button = tk.Button(self.window, text="Open Log File", command=self.open_file_dialog)
+        open_file_button.pack()
+
+        show_error_details_button = tk.Button(self.window, text="Show Error Details", command=self.show_error_details)
+        show_error_details_button.pack()
+
+        export_errors_button = tk.Button(self.window, text="Export Errors", command=self.export_errors)
+        export_errors_button.pack()
+
+        self.console = scrolledtext.ScrolledText(self.window, wrap=tk.WORD, width=80, height=20)
+        self.console.pack()
+
+        self.status_label = tk.Label(self.window, text="", wraplength=400)
+        self.status_label.pack()
+
+        self.error_count_label = tk.Label(self.window, text="Total Errors: 0")
+        self.error_count_label.pack()
+
+        self.window.resizable(True, True)
+
+    def analyze_game_log(self):
+        log_file_path = self.log_entry.get()
+
+        if log_file_path:
+            try:
+                with open(log_file_path, 'r') as log_file:
+                    log_data = log_file.read()
+
+                error_patterns = [
+                    r'Error:(.*)',
+                    r'Exception:(.*)',
+                    r'Game crashed due to:(.*)',
+                    r'Process terminated unexpectedly:(.*)',
+                    # Add more patterns as needed based on common error patterns.
+                ]
+
+                self.error_messages = []
+
+                for pattern in error_patterns:
+                    matches = re.findall(pattern, log_data, re.IGNORECASE)
+                    if matches:
+                        self.error_messages.extend(matches)
+
+                pid_pattern = r'Game terminated by PID (\d+)'
+                pid_match = re.search(pid_pattern, log_data)
+                if pid_match:
+                    pid = int(pid_match.group(1))
+                    if psutil.pid_exists(pid):
+                        self.error_messages.append(f"Game was terminated by PID {pid}, which is still running.")
+
+                self.display_errors()
+
+            except FileNotFoundError:
+                self.display_error("File not found.")
+                print("File not found.")
+
+            except Exception as e:
+                self.display_error(f"An error occurred: {str(e)}")
+                print(f"An error occurred: {str(e)}")
+
+    def display_errors(self):
+        if self.error_messages:
+            self.console.delete(1.0, tk.END)
+            for error_message in self.error_messages:
+                self.console.insert(tk.END, error_message + "\n")
+            self.current_index = 0
+            self.status_label.config(text=f"Error {self.current_index + 1} of {len(self.error_messages)}")
+            self.display_error_count()
+        else:
+            self.console.delete(1.0, tk.END)
+            self.console.insert(tk.END, "No errors or unexpected termination detected.")
+            self.status_label.config(text="Error finding completed.")
+            self.display_error_count()
+
+    def show_next_error(self):
+        if self.error_messages:
+            self.current_index += 1
+            if self.current_index < len(self.error_messages):
+                self.status_label.config(text=f"Error {self.current_index + 1} of {len(self.error_messages)}")
+            else:
+                self.status_label.config(text="Error finding completed. No more errors to display.")
+        else:
+            self.status_label.config(text="No errors found.")
+
+    def clear_errors(self):
+        self.error_messages = []
+        self.current_index = 0
+        self.console.delete(1.0, tk.END)
+        self.status_label.config(text="Error messages cleared.")
+        self.error_count_label.config(text="Total Errors: 0")
+
+    def open_file_dialog(self):
+        file_path = filedialog.askopenfilename(filetypes=[("Text Files", "*.txt")])
+        if file_path:
+            self.log_entry.delete(0, tk.END)
+            self.log_entry.insert(0, file_path)
+
+    def show_error_details(self):
+        if self.error_messages and self.current_index < len(self.error_messages):
+            error_message = self.error_messages[self.current_index]
+            error_detail_window = tk.Toplevel(self.window)
+            error_detail_window.title("Error Details")
+
+            error_detail_text = tk.Text(error_detail_window, wrap=tk.WORD, height=10, width=40)
+            error_detail_text.insert(tk.END, error_message)
+            error_detail_text.pack()
+
+        else:
+            self.status_label.config(text="No error selected.")
+
+    def export_errors(self):
+        export_file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+
+        if export_file_path:
+            try:
+                with open(export_file_path, 'w') as export_file:
+                    # Write a description (include the game's name if known)
+                    game_name = "Game Name"  # Replace with detected game name if available
+                    export_file.write(f"Error Log for {game_name}\n\n")
+
+                    # Write the error messages with descriptions
+                    for index, error_message in enumerate(self.error_messages, start=1):
+                        export_file.write(f"Error {index}:\n")
+                        export_file.write(f"Description: (Provide description if known)\n")
+                        export_file.write(f"Error Message: {error_message}\n\n")
+
+                print(f"Errors exported to {export_file_path}")
+
+            except Exception as e:
+                print(f"An error occurred while exporting: {str(e)}")
+
+    def display_error_count(self):
+        error_count = len(self.error_messages)
+        self.error_count_label.config(text=f"Total Errors: {error_count}")
+
+    def display_error(self, error_message):
+        self.console.delete(1.0, tk.END)
+        self.console.insert(tk.END, error_message + "\n")
+
+if __name__ == "__main__":
+    window = tk.Tk()
+    app = GameLogAnalyzer(window)
+    window.mainloop()
