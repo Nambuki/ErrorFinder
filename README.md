@@ -6,7 +6,7 @@ Game Log Analyzer is a tool created by [Nambuki] for analyzing game log files to
 
 ### Running Game Log Analyzer
 
-1. Download the `GameLogAnalyzer.exe` file from the [Releases](https://github.com/yourusername/GameLogAnalyzer/releases) section of this repository.
+1. Download the `GameLogAnalyzer.exe` file from the [Releases](Releases) section of this repository.
 
 2. Double-click `GameLogAnalyzer.exe` to run the application.
 
