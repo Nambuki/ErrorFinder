@@ -19,7 +19,7 @@ Game Log Analyzer is a tool created by [Nambuki] for analyzing game log files to
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE). You are free to use and distribute this software, but we kindly request that you provide attribution to [Your Name] if you use this tool or its code in your own project.
+This project is open source and available under the [MIT License](LICENSE). You are free to use and distribute this software, but we kindly request that you provide attribution to [Nambuki] if you use this tool or its code in your own project.
 
 ## Contributing
 
